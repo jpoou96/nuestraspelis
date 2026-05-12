@@ -119,8 +119,8 @@ function renderMovies(movies){
           ${watched ? "watched":"pending"}
         ">
           ${watched
-            ? "✅ VISTO"
-            : "🎬 PENDIENTE"}
+            ? "VISTO"
+            : "PENDIENTE"}
         </div>
 
       </div>
