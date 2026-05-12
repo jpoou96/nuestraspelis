@@ -16,10 +16,6 @@
     "year": 2010
   },
   {
-    "title": "El increíble Hulk",
-    "year": 2008
-  },
-  {
     "title": "Thor",
     "year": 2011
   },
@@ -64,10 +60,6 @@
     "year": 2016
   },
   {
-    "title": "Jessica Jones",
-    "year": 2015
-  },
-  {
     "title": "Black Panther",
     "year": 2018
   },
@@ -100,7 +92,7 @@
     "year": 2021
   },
   {
-    "title": "Loki",
+    "title": "Loki - Temporada 1",
     "year": 2021
   },
   {
@@ -142,6 +134,11 @@
   {
     "title": "Ant-Man y la Avispa: Quantumania",
     "year": 2023
+  },
+  
+  {
+    "title": "Loki - Temporada 1",
+    "year": 2021
   },
   {
     "title": "Capitán América: Brave New World",
