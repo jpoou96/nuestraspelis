@@ -3,7 +3,6 @@
 import {
   db,
   doc,
-  getDoc,
   setDoc,
   onSnapshot
 }
@@ -21,12 +20,23 @@ const progressText =
 let moviesData = [];
 let watchedMovies = {};
 
+/* =========================
+   LOAD MOVIES
+========================= */
+
 async function loadMovies(){
 
   try{
 
     const response =
       await fetch("movies.json");
+
+    if(!response.ok){
+
+      throw new Error(
+        "No se pudo cargar movies.json"
+      );
+    }
 
     const movies =
       await response.json();
@@ -39,12 +49,17 @@ async function loadMovies(){
 
     console.error(error);
 
-    timeline.innerHTML =
-      `<div class="error-box">
+    timeline.innerHTML = `
+      <div class="error-box">
         Error cargando películas
-      </div>`;
+      </div>
+    `;
   }
 }
+
+/* =========================
+   FIREBASE REALTIME
+========================= */
 
 function listenRealtime(){
 
@@ -67,19 +82,71 @@ function listenRealtime(){
   });
 }
 
+/* =========================
+   TOGGLE WATCHED
+========================= */
+
 async function toggleMovie(movieTitle){
 
   const roadmapRef =
     doc(db,"roadmaps","marvel");
 
-  watchedMovies[movieTitle] =
-    !watchedMovies[movieTitle];
+  const current =
+    watchedMovies[movieTitle]?.watched || false;
+
+  const comments =
+    watchedMovies[movieTitle]?.comments || [];
+
+  watchedMovies[movieTitle] = {
+
+    watched: !current,
+
+    comments
+  };
 
   await setDoc(
     roadmapRef,
     watchedMovies
   );
 }
+
+/* =========================
+   ADD COMMENT
+========================= */
+
+async function addComment(movieTitle,text){
+
+  if(!text.trim()) return;
+
+  const roadmapRef =
+    doc(db,"roadmaps","marvel");
+
+  const watched =
+    watchedMovies[movieTitle]?.watched || false;
+
+  const comments =
+    watchedMovies[movieTitle]?.comments || [];
+
+  comments.push({
+    text
+  });
+
+  watchedMovies[movieTitle] = {
+
+    watched,
+
+    comments
+  };
+
+  await setDoc(
+    roadmapRef,
+    watchedMovies
+  );
+}
+
+/* =========================
+   RENDER
+========================= */
 
 function renderMovies(movies){
 
@@ -88,7 +155,10 @@ function renderMovies(movies){
   movies.forEach((movie,index)=>{
 
     const watched =
-      watchedMovies[movie.title];
+      watchedMovies[movie.title]?.watched;
+
+    const comments =
+      watchedMovies[movie.title]?.comments || [];
 
     const card =
       document.createElement("div");
@@ -118,9 +188,41 @@ function renderMovies(movies){
           status
           ${watched ? "watched":"pending"}
         ">
+
           ${watched
-            ? "VISTO"
-            : "PENDIENTE"}
+            ? "Vista"
+            : "Pendiente"}
+
+        </div>
+
+      </div>
+
+      <div class="comments-section">
+
+        <div class="comments-list">
+
+          ${comments.map(comment => `
+
+            <div class="comment-item">
+              ${comment.text}
+            </div>
+
+          `).join("")}
+
+        </div>
+
+        <div class="comment-input-container">
+
+          <input
+            type="text"
+            class="comment-input"
+            placeholder="Añadir comentario..."
+          />
+
+          <button class="comment-btn">
+            Guardar
+          </button>
+
         </div>
 
       </div>
@@ -129,10 +231,12 @@ function renderMovies(movies){
 
         ${watched
           ? "Marcar como pendiente"
-          : "Marcar como visto"}
+          : "Marcar como vista"}
 
       </button>
     `;
+
+    /* WATCH BUTTON */
 
     const button =
       card.querySelector(".watch-btn");
@@ -142,11 +246,46 @@ function renderMovies(movies){
       toggleMovie(movie.title);
     });
 
+    /* COMMENTS */
+
+    const commentInput =
+      card.querySelector(".comment-input");
+
+    const commentBtn =
+      card.querySelector(".comment-btn");
+
+    commentBtn.addEventListener("click",()=>{
+
+      addComment(
+        movie.title,
+        commentInput.value
+      );
+
+      commentInput.value = "";
+    });
+
+    commentInput.addEventListener("keypress",(e)=>{
+
+      if(e.key === "Enter"){
+
+        addComment(
+          movie.title,
+          commentInput.value
+        );
+
+        commentInput.value = "";
+      }
+    });
+
     timeline.appendChild(card);
   });
 
   updateProgress(movies);
 }
+
+/* =========================
+   PROGRESS
+========================= */
 
 function updateProgress(movies){
 
@@ -154,7 +293,9 @@ function updateProgress(movies){
 
   movies.forEach(movie=>{
 
-    if(watchedMovies[movie.title]){
+    if(
+      watchedMovies[movie.title]?.watched
+    ){
       watchedCount++;
     }
   });
@@ -168,5 +309,9 @@ function updateProgress(movies){
   progressText.innerText =
     `${watchedCount} / ${movies.length} vistas`;
 }
+
+/* =========================
+   INIT
+========================= */
 
 loadMovies();
